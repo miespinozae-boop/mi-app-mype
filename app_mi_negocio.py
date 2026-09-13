@@ -782,37 +782,86 @@ st.markdown(f"""
 # =========================================================
 # HERO
 # =========================================================
+# =========================================================
+# HERO PRINCIPAL
+# =========================================================
+
 st.markdown("""
 <div class="hero">
-    <div class="hero-title">Convierte tus datos<br>en <span>oportunidades</span></div>
+
+    <div class="hero-title">
+        Convierte tus datos<br>
+        en <span>oportunidades</span>
+    </div>
+
     <div class="hero-text">
         Analiza el rendimiento de tu negocio, identifica oportunidades
         de mejora y toma decisiones con confianza.
     </div>
+
     <div class="hero-buttons">
-        <span class="hero-button hero-primary">☁ &nbsp; Cargar datos</span>
-        <span class="hero-button hero-secondary">▶ &nbsp; Ver tutorial</span>
+        <span class="hero-button hero-primary">
+            Cargar datos
+        </span>
+
+        <span class="hero-button hero-secondary">
+            ▶ Ver tutorial
+        </span>
     </div>
 
+    <!-- ILUSTRACIÓN -->
     <div class="hero-art">
+
         <div class="laptop">
+
             <div class="laptop-screen">
+
                 <div class="mini-line"></div>
-                <div class="mini-bars"><i></i><i></i><i></i><i></i></div>
+
+                <div class="mini-bars">
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                </div>
+
             </div>
+
         </div>
+
         <div class="laptop-base"></div>
+
         <div class="plant">♧</div>
+
     </div>
 
+    <!-- BENEFICIOS -->
     <div class="hero-checks">
-        <div class="check"><b>✓</b> Análisis en tiempo real</div>
-        <div class="check"><b>✓</b> Alertas automáticas</div>
-        <div class="check"><b>✓</b> Recomendaciones personalizadas</div>
-        <div class="check"><b>✓</b> Simulador de escenarios</div>
-        <div class="check"><b>✓</b> Carga de tus propios datos</div>
+
+        <div class="check">
+            <b>✓</b> Análisis en tiempo real
+        </div>
+
+        <div class="check">
+            <b>✓</b> Alertas automáticas
+        </div>
+
+        <div class="check">
+            <b>✓</b> Recomendaciones personalizadas
+        </div>
+
+        <div class="check">
+            <b>✓</b> Simulador de escenarios
+        </div>
+
+        <div class="check">
+            <b>✓</b> Carga de tus propios datos
+        </div>
+
     </div>
+
 </div>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
 
 # =========================================================
