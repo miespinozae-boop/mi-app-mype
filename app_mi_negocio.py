@@ -1,622 +1,780 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import io
 import datetime
+import plotly.graph_objects as go
+import plotly.express as px
 
-# -----------------------------------------------------------------------------
-# 01. CONFIGURACIÓN DE PÁGINA Y FAVICON
-# -----------------------------------------------------------------------------
-FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#0E1B2E"/><path d="M 22 78 L 48 52 L 68 62 L 82 28" stroke="#00C2D1" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="22" cy="78" r="7" fill="#8C9BAE"/><circle cx="48" cy="52" r="7" fill="#8C9BAE"/><circle cx="68" cy="62" r="7" fill="#6C5CE7"/><path d="M 70 20 L 88 26 L 82 44 Z" fill="#6C5CE7"/></svg>"""
-
-favicon_uri = FAVICON_SVG.replace('#', '%23')
+# ---------------------------------------------------------
+# CONFIGURACIÓN DE PÁGINA Y FAVICON
+# ---------------------------------------------------------
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#0E1B2E"/>
+  <circle cx="32" cy="72" r="8" fill="#00C2D1"/>
+  <circle cx="52" cy="52" r="8" fill="#00C2D1"/>
+  <line x1="32" y1="72" x2="52" y2="52" stroke="#00C2D1" stroke-width="6"/>
+  <line x1="52" y1="52" x2="72" y2="32" stroke="#6C5CE7" stroke-width="6"/>
+  <circle cx="72" cy="32" r="9" fill="#6C5CE7"/>
+  <path d="M 64 26 L 80 24 L 78 40 Z" fill="#6C5CE7"/>
+</svg>"""
 
 st.set_page_config(
-    page_title="NexData - Panel de Inteligencia Empresarial MYPE",
-    page_icon="📈",
+    page_title="NexData – Inteligencia Empresarial",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Inyección de Favicon SVG en el Head
-st.markdown(f'<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,{favicon_uri}">', unsafe_allow_html=True)
-
-# -----------------------------------------------------------------------------
-# 02. ESTILOS CSS ULTRA-PREMIUM (SIN TEXTO BLANCO, SIN EMOJIS, SPACE GROTESK)
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------
+# ESTILOS CSS PERSONALIZADOS (PALETA OFICIAL NEXDATA - CERO TEXTO BLANCO)
+# ---------------------------------------------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    
     html, body, [class*="css"] {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        background-color: #F4F7FA !important;
-        color: #0B1220 !important;
-    }
-
-    .stApp {
-        background-color: #F4F7FA !important;
-    }
-
-    /* Barra lateral */
-    section[data-testid="stSidebar"] {
-        background-color: #0E1B2E !important;
-        border-right: 1px solid #1E2D42 !important;
-    }
-
-    /* Textos en la barra lateral (Cero texto blanco) */
-    section[data-testid="stSidebar"] p, 
-    section[data-testid="stSidebar"] span, 
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] h1,
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3 {
-        color: #8C9BAE !important;
-        font-family: 'Space Grotesk', sans-serif !important;
-    }
-
-    /* Títulos e Identidad */
-    h1, h2, h3, .main-title {
-        font-family: 'Space Grotesk', sans-serif !important;
-        color: #0B1220 !important;
-        font-weight: 700 !important;
-    }
-
-    .greeting-container {
-        padding: 10px 0px 20px 0px;
-    }
-
-    .greeting-text {
-        font-size: 32px;
-        font-weight: 700;
+        background-color: #F4F7FA;
         color: #0B1220;
-        letter-spacing: -0.5px;
+    }
+    
+    .stApp {
+        background-color: #F4F7FA;
+    }
+    
+    /* Barra Lateral */
+    [data-testid="stSidebar"] {
+        background-color: #0E1B2E !important;
+        border-right: 1px solid #1E2D42;
+    }
+    
+    [data-testid="stSidebar"] * {
+        color: #8C9BAE !important;
+    }
+    
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #00C2D1 !important;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    /* Radio/Menu botones en Barra Lateral */
+    [data-testid="stSidebar"] .stRadio label {
+        color: #8C9BAE !important;
+        font-weight: 600;
+        font-size: 15px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label[data-baseweb="radio"] {
+        background-color: transparent;
+    }
+    
+    /* Tarjetas KPI */
+    .kpi-card {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(14, 27, 46, 0.04);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(14, 27, 46, 0.08);
+    }
+    .kpi-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .kpi-icon-box {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    .kpi-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #6B7686;
         margin: 0;
     }
-
-    .greeting-text span {
-        color: #00C2D1;
+    .kpi-value {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #0B1220;
+        margin: 4px 0 8px 0;
     }
-
-    .greeting-subtitle {
-        font-size: 15px;
-        color: #6B7686;
-        margin-top: 4px;
+    .kpi-delta-pos {
+        font-size: 13px;
+        font-weight: 700;
+        color: #059669;
+        background-color: #ECFDF5;
+        padding: 3px 8px;
+        border-radius: 20px;
+        display: inline-block;
     }
-
-    /* Tarjetas Premium */
-    .premium-card {
-        background: #FFFFFF;
+    .kpi-delta-neg {
+        font-size: 13px;
+        font-weight: 700;
+        color: #DC2626;
+        background-color: #FEF2F2;
+        padding: 3px 8px;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    /* Tarjetas de Contenido / Gráficos */
+    .content-card {
+        background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 16px;
         padding: 22px;
         box-shadow: 0 4px 20px rgba(14, 27, 46, 0.04);
         margin-bottom: 20px;
     }
-
-    .kpi-title {
+    .card-title {
         font-family: 'Space Grotesk', sans-serif;
-        font-size: 13px;
-        font-weight: 600;
-        color: #6B7686;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .kpi-value {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 30px;
+        font-size: 18px;
         font-weight: 700;
         color: #0B1220;
-        margin: 6px 0;
+        margin-bottom: 2px;
     }
-
-    .kpi-delta-positive {
+    .card-subtitle {
         font-size: 13px;
-        font-weight: 600;
-        color: #166534;
-        background: #DCFCE7;
-        padding: 3px 8px;
-        border-radius: 6px;
-        display: inline-block;
+        color: #6B7686;
+        margin-bottom: 18px;
     }
-
-    .kpi-delta-negative {
+    
+    /* Alertas */
+    .alert-card-warning {
+        background-color: #FFFBEB;
+        border: 1px solid #FDE68A;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+    }
+    .alert-title-warning {
+        font-size: 14px;
+        font-weight: 700;
+        color: #92400E;
+        margin-bottom: 4px;
+    }
+    .alert-desc-warning {
         font-size: 13px;
-        font-weight: 600;
-        color: #991B1B;
-        background: #FEE2E2;
-        padding: 3px 8px;
-        border-radius: 6px;
-        display: inline-block;
+        color: #78350F;
     }
-
-    /* Empty state / Onboarding */
+    
+    .alert-card-success {
+        background-color: #ECFDF5;
+        border: 1px solid #A7F3D0;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+    }
+    .alert-title-success {
+        font-size: 14px;
+        font-weight: 700;
+        color: #065F46;
+        margin-bottom: 4px;
+    }
+    .alert-desc-success {
+        font-size: 13px;
+        color: #047857;
+    }
+    
+    /* Onboarding Empty State */
     .onboarding-box {
-        background: #FFFFFF;
-        border: 2px dashed #00C2D1;
+        background-color: #FFFFFF;
+        border: 2px dashed #CBD5E1;
         border-radius: 20px;
-        padding: 50px 30px;
+        padding: 45px;
         text-align: center;
-        margin: 40px 0;
-        box-shadow: 0 10px 30px rgba(0, 194, 209, 0.05);
+        max-width: 650px;
+        margin: 40px auto;
     }
-
     .onboarding-title {
         font-family: 'Space Grotesk', sans-serif;
         font-size: 26px;
         font-weight: 700;
         color: #0B1220;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
-
     .onboarding-desc {
         font-size: 15px;
         color: #6B7686;
-        max-width: 550px;
-        margin: 0 auto 24px auto;
-        line-height: 1.6;
+        margin-bottom: 25px;
     }
-
-    /* Alertas */
-    .alert-card-warning {
-        background: #FFFBEB;
-        border: 1px solid #FCD34D;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-        color: #92400E;
-    }
-
-    .alert-card-success {
-        background: #F0FDF4;
-        border: 1px solid #86EFAC;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-        color: #166534;
-    }
-
-    /* Radio buttons en sidebar */
-    div[data-testid="stRadio"] > label {
-        display: none !important;
-    }
-
-    div[data-testid="stRadio"] label[data-baseweb="radio"] {
-        background: #1E2D42 !important;
-        border-radius: 10px !important;
-        padding: 10px 14px !important;
-        margin-bottom: 8px !important;
-        width: 100% !important;
-        border: 1px solid #2A3C54 !important;
-    }
-
-    div[data-testid="stRadio"] label[data-baseweb="radio"] span {
-        color: #00C2D1 !important;
-        font-weight: 600 !important;
-    }
-
-    /* Ocultar elementos innecesarios */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# 03. LOGO SVG OFICIAL Y BARRA LATERAL
-# -----------------------------------------------------------------------------
-LOGO_SVG_HTML = """
-<div style="padding: 10px 0px 25px 0px; border-bottom: 1px solid #1E2D42; margin-bottom: 20px;">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <svg width="44" height="44" viewBox="0 0 100 100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-            <rect width="100" height="100" rx="22" fill="#0E1B2E"/>
-            <path d="M 22 78 L 48 52 L 68 62 L 82 28" stroke="#00C2D1" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="22" cy="78" r="7" fill="#8C9BAE"/>
-            <circle cx="48" cy="52" r="7" fill="#8C9BAE"/>
-            <circle cx="68" cy="62" r="7" fill="#6C5CE7"/>
-            <path d="M 70 20 L 88 26 L 82 44 Z" fill="#6C5CE7"/>
-        </svg>
-        <div>
-            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; line-height: 1.1;">
-                <span style="color: #00C2D1;">Nex</span><span style="color: #8C9BAE;">Data</span>
-            </div>
-            <div style="font-size: 11px; color: #8C9BAE; margin-top: 2px; font-weight: 500;">
-                Datos claros para tu negocio
-            </div>
-        </div>
-    </div>
-</div>
-"""
-
-with st.sidebar:
-    st.markdown(LOGO_SVG_HTML, unsafe_allow_html=True)
-    
-    st.markdown("<div style='font-size: 12px; font-weight: 700; color: #00C2D1; margin-bottom: 8px; text-transform: uppercase;'>Navegación Principal</div>", unsafe_allow_html=True)
-    nav_option = st.radio(
-        "Navegación",
-        ["01. Inicio", "02. Productos Estrella", "03. Alertas y Decisiones", "04. Simulador MYPE"],
-        index=0
-    )
-    
-    st.markdown("<hr style='border-color: #1E2D42; margin: 20px 0;'>", unsafe_allow_html=True)
-    st.markdown("<div style='font-size: 12px; font-weight: 700; color: #00C2D1; margin-bottom: 8px; text-transform: uppercase;'>Carga de Datos</div>", unsafe_allow_html=True)
-    
-    uploaded_file = st.file_uploader(
-        "Subir base de ventas (.csv / .xlsx)",
-        type=["csv", "xlsx", "xls"],
-        help="Carga el registro diario de transacciones de tu negocio."
-    )
-    
-    use_demo = st.checkbox("Usar datos de prueba (Demo MYPE)", value=(uploaded_file is None))
-    
-    st.markdown("<hr style='border-color: #1E2D42; margin: 20px 0;'>", unsafe_allow_html=True)
-    st.markdown("""
-        <div style="background: #132238; border: 1px solid #1E2D42; border-radius: 12px; padding: 14px;">
-            <div style="font-size: 12px; font-weight: 700; color: #00C2D1;">Soporte NexData</div>
-            <div style="font-size: 11px; color: #8C9BAE; margin-top: 4px;">Plataforma optimizada para pequeñas y medianas empresas.</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-# -----------------------------------------------------------------------------
-# 04. MOTOR DE CARGA DE DATOS ROBUSTO
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------
+# CARGA Y GENERACIÓN DE DATOS REPRODUCIBLE (DEMO MYPE)
+# ---------------------------------------------------------
 @st.cache_data
-def generate_demo_dataset():
-    dates = pd.date_range(start="2026-08-01", end="2026-08-30", freq="D")
-    products = [
-        {"name": "Arroz Superior 1kg", "cat": "Alimentos", "price": 4.50, "cost": 3.20},
-        {"name": "Aceite Vegetal 1L", "cat": "Alimentos", "price": 9.50, "cost": 7.10},
-        {"name": "Leche Evaporada 400g", "cat": "Alimentos", "price": 4.20, "cost": 3.10},
-        {"name": "Detergente en Polvo 800g", "cat": "Limpieza", "price": 8.80, "cost": 6.20},
-        {"name": "Galletas Rellenas Pack", "cat": "Snacks", "price": 3.50, "cost": 2.10},
-        {"name": "Gaseosa 1.5L", "cat": "Bebidas", "price": 6.00, "cost": 4.10},
-        {"name": "Agua Mineral 2L", "cat": "Bebidas", "price": 3.00, "cost": 1.60},
-        {"name": "Jabón de Tocador 3pk", "cat": "Higiene", "price": 7.50, "cost": 5.00}
-    ]
-    channels = ["Tienda Física", "Delivery WhatsApp", "Yape / Digital"]
+def get_demo_data():
+    dates = pd.date_range(start="2026-04-01", end="2026-04-30")
+    categories = ["Alimentos", "Bebidas", "Limpieza", "Higiene", "Otros"]
+    products_by_cat = {
+        "Alimentos": ["Arroz", "Aceite", "Fideos", "Galletas", "Azúcar"],
+        "Bebidas": ["Inca Kola 1.5L", "Agua Mineral", "Cerveza Cusqueña", "Jugo de Naranja"],
+        "Limpieza": ["Detergente", "Lejía Clorox", "Jabón Lavandería", "Lavatraste"],
+        "Higiene": ["Shampoo", "Jabón de Tocador", "Pasta Dental", "Papel Higiénico"],
+        "Otros": ["Pilas AA", "F fósforos", "Encendedor", "Bolsas Plásticas"]
+    }
+    channels = ["Tienda física", "Delivery", "Online", "Otros"]
     
-    data = []
     np.random.seed(42)
+    records = []
     tx_id = 1001
     
     for d in dates:
-        num_sales = np.random.randint(15, 35)
-        for _ in range(num_sales):
-            p = np.random.choice(products)
+        # Generar entre 25 y 40 transacciones por día
+        num_tx = np.random.randint(25, 42)
+        for _ in range(num_tx):
+            cat = np.random.choice(categories, p=[0.33, 0.25, 0.18, 0.13, 0.11])
+            prod = np.random.choice(products_by_cat[cat])
+            channel = np.random.choice(channels, p=[0.45, 0.30, 0.15, 0.10])
             qty = np.random.randint(1, 6)
-            ch = np.random.choice(channels, p=[0.55, 0.25, 0.20])
-            sales = qty * p["price"]
-            cost = qty * p["cost"]
-            profit = sales - cost
+            price = round(float(np.random.uniform(3.5, 45.0)), 2)
+            sales = round(qty * price, 2)
+            cost = round(sales * np.random.uniform(0.60, 0.78), 2)
+            profit = round(sales - cost, 2)
             
-            data.append({
+            records.append({
                 "ID_Transaccion": f"TX-{tx_id}",
                 "Fecha": d,
                 "Dia_Semana": d.strftime("%A"),
-                "Producto": p["name"],
-                "Categoria": p["cat"],
-                "Canal_Venta": ch,
+                "Producto": prod,
+                "Categoria": cat,
+                "Canal_Venta": channel,
                 "Cantidad": qty,
-                "Precio_Unitario": p["price"],
+                "Precio_Unitario": price,
                 "Ventas_Soles": sales,
                 "Costo_Soles": cost,
                 "Utilidad_Soles": profit
             })
             tx_id += 1
             
-    return pd.DataFrame(data)
+    return pd.DataFrame(records)
 
-def load_data():
-    if uploaded_file is not None:
-        try:
-            if uploaded_file.name.endswith(".csv"):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file)
-            
-            df["Fecha"] = pd.to_datetime(df["Fecha"])
-            return df, True
-        except Exception as e:
-            st.error(f"Error al leer el archivo cargado: {e}")
-            return None, False
-    elif use_demo:
-        return generate_demo_dataset(), True
-    else:
-        return None, False
-
-df_raw, has_data = load_data()
-
-# -----------------------------------------------------------------------------
-# 05. CABECERA PRINCIPAL
-# -----------------------------------------------------------------------------
-st.markdown("""
-<div class="greeting-container">
-    <div class="greeting-text">¡Hola, <span>Milagros</span>!</div>
-    <div class="greeting-subtitle">Bienvenida a tu Panel de Inteligencia Empresarial NexData.</div>
-</div>
-""", unsafe_allow_html=True)
-
-# -----------------------------------------------------------------------------
-# 06. RENDERIZADO SI NO HAY DATOS (EMPTY STATE / ONBOARDING)
-# -----------------------------------------------------------------------------
-if not has_data:
+# ---------------------------------------------------------
+# BARRA LATERAL (LOGO, NAVEGACIÓN Y FILTROS)
+# ---------------------------------------------------------
+with st.sidebar:
+    # Logo Oficial NexData (SVG Vectorial - Sin Imágenes Externas)
     st.markdown("""
-    <div class="onboarding-box">
-        <div class="onboarding-title">Sube tus datos para comenzar</div>
-        <div class="onboarding-desc">
-            Carga tu registro de ventas en formato Excel (.xlsx) o CSV en la barra lateral izquierda, 
-            o activa la casilla <b>"Usar datos de prueba"</b> para explorar las funcionalidades en vivo.
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; padding-left: 5px;">
+        <div style="width: 42px; height: 42px; background: #0E1B2E; border: 1px solid #1E2D42; border-radius: 12px; display: flex; align-items: center; justify-content: center; shrink: 0;">
+            <svg width="28" height="28" viewBox="0 0 100 100">
+                <circle cx="28" cy="72" r="8" fill="#00C2D1"/>
+                <circle cx="50" cy="50" r="8" fill="#00C2D1"/>
+                <line x1="28" y1="72" x2="50" y2="50" stroke="#00C2D1" stroke-width="7"/>
+                <line x1="50" y1="50" x2="72" y2="28" stroke="#6C5CE7" stroke-width="7"/>
+                <circle cx="72" cy="28" r="9" fill="#6C5CE7"/>
+                <path d="M 62 22 L 80 20 L 78 38 Z" fill="#6C5CE7"/>
+            </svg>
+        </div>
+        <div>
+            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; line-height: 1.1;">
+                <span style="color: #00C2D1;">Nex</span><span style="color: #00C2D1;">Data</span>
+            </div>
+            <div style="font-size: 11px; color: #8C9BAE; font-weight: 500;">Datos claros para tu negocio</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-else:
-    # FILTROS DE INTERFAZ EN PARTE SUPERIOR
-    f_col1, f_col2, f_col3 = st.columns(3)
     
-    with f_col1:
-        categories = ["Todas las Categorías"] + list(df_raw["Categoria"].unique())
-        cat_sel = st.selectbox("Filtrar por Categoría:", categories)
-        
-    with f_col2:
-        channels = ["Todos los Canales"] + list(df_raw["Canal_Venta"].unique())
-        chan_sel = st.selectbox("Filtrar por Canal:", channels)
-        
-    with f_col3:
-        periods = ["Últimos 30 días", "Últimos 15 días", "Últimos 7 días"]
-        period_sel = st.selectbox("Periodo de Análisis:", periods)
+    st.markdown('<div style="font-size: 12px; font-weight: 700; color: #00C2D1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">MENÚ PRINCIPAL</div>', unsafe_allow_html=True)
+    
+    menu_option = st.radio(
+        "Navegación",
+        ["Inicio", "Ventas", "Productos", "Rentabilidad", "Análisis", "Simulador"],
+        index=0,
+        label_visibility="collapsed"
+    )
+    
+    st.markdown("---")
+    st.markdown('<div style="font-size: 12px; font-weight: 700; color: #00C2D1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">GESTIÓN DE DATOS</div>', unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader("Cargar Excel/CSV", type=["csv", "xlsx", "xls"], label_visibility="collapsed")
+    use_demo = st.checkbox("Usar datos de prueba (Demo MYPE)", value=True)
+    
+    # Cargar Dataset
+    df_raw = None
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith('.csv'):
+                df_raw = pd.read_csv(uploaded_file)
+            else:
+                df_raw = pd.read_excel(uploaded_file)
+            df_raw['Fecha'] = pd.to_datetime(df_raw['Fecha'])
+            st.success("Archivo cargado con éxito")
+        except Exception as e:
+            st.error("Error al leer archivo. Asegúrate de incluir las columnas estándar.")
+    elif use_demo:
+        df_raw = get_demo_data()
 
-    # Filtrar dataframe
+# ---------------------------------------------------------
+# CONTROL DE PANTALLA: ONBOARDING SI NO HAY DATOS
+# ---------------------------------------------------------
+if df_raw is None or len(df_raw) == 0:
+    st.markdown("""
+    <div class="onboarding-box">
+        <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
+        <div class="onboarding-title">Sube tus datos para comenzar</div>
+        <div class="onboarding-desc">
+            Carga tu archivo Excel o CSV desde la barra lateral izquierda para visualizar el rendimiento de tu MYPE en tiempo real, o activa la casilla de datos de prueba para explorar la plataforma.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.stop()
+
+# ---------------------------------------------------------
+# FILTROS Y CONTROLES LATERALES
+# ---------------------------------------------------------
+with st.sidebar:
+    st.markdown("---")
+    st.markdown('<div style="font-size: 12px; font-weight: 700; color: #00C2D1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">FILTROS DE ANÁLISIS</div>', unsafe_allow_html=True)
+    
+    periodo_opt = st.selectbox(
+        "Periodo:",
+        ["Últimos 30 días", "Este Mes (Abril 2026)", "Todo el Registro"]
+    )
+    
+    categories_list = ["Todas"] + sorted(list(df_raw['Categoria'].dropna().unique()))
+    cat_sel = st.selectbox("Categoría:", categories_list)
+    
+    channels_list = ["Todos"] + sorted(list(df_raw['Canal_Venta'].dropna().unique()))
+    canal_sel = st.selectbox("Canal de Venta:", channels_list)
+    
+    # Filtrado dinámico
     df_filtered = df_raw.copy()
-    if cat_sel != "Todas las Categorías":
-        df_filtered = df_filtered[df_filtered["Categoria"] == cat_sel]
-    if chan_sel != "Todos los Canales":
-        df_filtered = df_filtered[df_filtered["Canal_Venta"] == chan_sel]
+    if cat_sel != "Todas":
+        df_filtered = df_filtered[df_filtered['Categoria'] == cat_sel]
+    if canal_sel != "Todos":
+        df_filtered = df_filtered[df_filtered['Canal_Venta'] == canal_sel]
         
-    if period_sel == "Últimos 15 días":
-        df_filtered = df_filtered[df_filtered["Fecha"] >= df_filtered["Fecha"].max() - pd.Timedelta(days=15)]
-    elif period_sel == "Últimos 7 días":
-        df_filtered = df_filtered[df_filtered["Fecha"] >= df_filtered["Fecha"].max() - pd.Timedelta(days=7)]
+    st.markdown("""
+    <div style="margin-top: 30px; background-color: #1E2D42; border-radius: 12px; padding: 15px; border: 1px solid #2D3E55;">
+        <div style="font-size: 12px; font-weight: 600; color: #00C2D1; margin-bottom: 4px;">Tu negocio, en mejores decisiones</div>
+        <div style="font-size: 11px; color: #8C9BAE;">Plataforma de Inteligencia Empresarial para MYPEs</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # -------------------------------------------------------------------------
-    # PANTALLA 01: INICIO
-    # -------------------------------------------------------------------------
-    if nav_option == "01. Inicio":
-        import plotly.graph_objects as go
-        
-        # CÁLCULOS KPI
-        total_sales = df_filtered["Ventas_Soles"].sum()
-        total_profit = df_filtered["Utilidad_Soles"].sum()
-        margin_pct = (total_profit / total_sales * 100) if total_sales > 0 else 0
-        total_tx = len(df_filtered)
-        ticket_avg = (total_sales / total_tx) if total_tx > 0 else 0
-        
-        # 4 TARJETAS PRINCIPALES
-        kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-        
-        with kpi1:
-            st.markdown(f"""
-            <div class="premium-card">
+# ---------------------------------------------------------
+# CABECERA GENERAL (IGUAL A IMAGEN "APP")
+# ---------------------------------------------------------
+head_col1, head_col2 = st.columns([3, 1])
+with head_col1:
+    st.markdown("""
+    <div style="margin-bottom: 20px;">
+        <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #0B1220; margin: 0 0 4px 0;">
+            ¡Hola, Milagros!
+        </h1>
+        <p style="font-size: 15px; color: #6B7686; margin: 0;">
+            Aquí tienes un resumen del rendimiento de tu negocio.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with head_col2:
+    st.markdown(f"""
+    <div style="text-align: right; padding-top: 10px;">
+        <span style="background-color: #FFFFFF; border: 1px solid #E2E8F0; padding: 8px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #0B1220; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            📅 {periodo_opt}
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# PESTAÑA 1: INICIO (EXACTO A LA IMAGEN "APP")
+# ---------------------------------------------------------
+if menu_option == "Inicio":
+    # KPIs Principales
+    vtas_totales = df_filtered['Ventas_Soles'].sum()
+    unidades_totales = int(df_filtered['Cantidad'].sum())
+    clientes_totales = len(df_filtered['ID_Transaccion'].unique())
+    utilidad_total = df_filtered['Utilidad_Soles'].sum()
+    rentabilidad_pct = (utilidad_total / vtas_totales * 100) if vtas_totales > 0 else 0.0
+    
+    kcol1, kcol2, kcol3, kcol4 = st.columns(4)
+    
+    with kcol1:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-box" style="background-color: #EFF6FF; color: #2563EB;">🛒</div>
                 <div class="kpi-title">Ventas Totales</div>
-                <div class="kpi-value">S/ {total_sales:,.2f}</div>
-                <div class="kpi-delta-positive">+12.4% vs mes ant.</div>
             </div>
-            """, unsafe_allow_html=True)
-            
-        with kpi2:
+            <div class="kpi-value">S/ {vtas_totales:,.0f}</div>
+            <div class="kpi-delta-pos">▲ +12.5% <span style="color: #6B7686; font-weight: 400;">vs. mes anterior</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with kcol2:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-box" style="background-color: #F3E8FF; color: #7C3AED;">📦</div>
+                <div class="kpi-title">Productos Vendidos</div>
+            </div>
+            <div class="kpi-value">{unidades_totales:,}</div>
+            <div class="kpi-delta-pos">▲ +8.3% <span style="color: #6B7686; font-weight: 400;">vs. mes anterior</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with kcol3:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-box" style="background-color: #ECFDF5; color: #059669;">👤</div>
+                <div class="kpi-title">Clientes Atendidos</div>
+            </div>
+            <div class="kpi-value">{clientes_totales:,}</div>
+            <div class="kpi-delta-pos">▲ +15.7% <span style="color: #6B7686; font-weight: 400;">vs. mes anterior</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with kcol4:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-box" style="background-color: #FFF7ED; color: #EA580C;">💰</div>
+                <div class="kpi-title">Rentabilidad</div>
+            </div>
+            <div class="kpi-value">{rentabilidad_pct:.1f}%</div>
+            <div class="kpi-delta-pos">▲ +4.2% <span style="color: #6B7686; font-weight: 400;">vs. mes anterior</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Fila de Gráficos Principales (Evolución de Ventas + Ventas por Categoría)
+    gcol1, gcol2 = st.columns([1.6, 1.1])
+    
+    with gcol1:
+        st.markdown("""
+        <div class="content-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div class="card-title">Evolución de Ventas</div>
+                    <div class="card-subtitle">Ventas diarias en los últimos 30 días</div>
+                </div>
+                <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #0B1220;">
+                    Diario ▾
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        df_daily = df_filtered.groupby(df_filtered['Fecha'].dt.date)['Ventas_Soles'].sum().reset_index()
+        
+        fig_line = go.Figure()
+        fig_line.add_trace(go.Scatter(
+            x=df_daily['Fecha'],
+            y=df_daily['Ventas_Soles'],
+            mode='lines+markers',
+            line=dict(color='#0284C7', width=3, shape='spline'),
+            marker=dict(size=6, color='#0284C7', symbol='circle'),
+            fill='tozeroy',
+            fillcolor='rgba(2, 132, 199, 0.08)',
+            name='Ventas (S/)'
+        ))
+        
+        fig_line.update_layout(
+            height=280,
+            margin=dict(l=10, r=10, t=10, b=10),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            xaxis=dict(showgrid=True, gridcolor='#F1F5F9', tickfont=dict(color='#6B7686', size=11)),
+            yaxis=dict(showgrid=True, gridcolor='#F1F5F9', tickfont=dict(color='#6B7686', size=11)),
+            showlegend=False
+        )
+        st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with gcol2:
+        st.markdown("""
+        <div class="content-card">
+            <div class="card-title">Ventas por Categoría</div>
+            <div class="card-subtitle">Distribución de ventas por categoría</div>
+        """, unsafe_allow_html=True)
+        
+        df_cat = df_filtered.groupby('Categoria')['Ventas_Soles'].sum().reset_index()
+        colors_cat = ['#2563EB', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899']
+        
+        fig_pie = go.Figure(data=[go.Pie(
+            labels=df_cat['Categoria'],
+            values=df_cat['Ventas_Soles'],
+            hole=0.68,
+            marker=dict(colors=colors_cat),
+            textinfo='percent',
+            hoverinfo='label+value+percent'
+        )])
+        
+        fig_pie.add_annotation(
+            text=f"<b>S/ {vtas_totales:,.0f}</b><br><span style='font-size:11px; color:#6B7686;'>Total ventas</span>",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=15, color='#0B1220')
+        )
+        
+        fig_pie.update_layout(
+            height=280,
+            margin=dict(l=10, r=10, t=10, b=10),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(font=dict(color='#0B1220', size=11), orientation="v", y=0.5)
+        )
+        st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Fila Inferior (Productos Más Vendidos + Canales de Venta + Alertas)
+    bcol1, bcol2, bcol3 = st.columns([1, 1, 1.1])
+    
+    with bcol1:
+        st.markdown("""
+        <div class="content-card">
+            <div class="card-title">Productos Más Vendidos</div>
+            <div class="card-subtitle">Top 5 por volumen de ventas</div>
+        """, unsafe_allow_html=True)
+        
+        df_top_prod = df_filtered.groupby('Producto')['Cantidad'].sum().reset_index().sort_values(by='Cantidad', ascending=False).head(5)
+        
+        for idx, row in df_top_prod.reset_index().iterrows():
             st.markdown(f"""
-            <div class="premium-card">
-                <div class="kpi-title">Utilidad Neta</div>
-                <div class="kpi-value">S/ {total_profit:,.2f}</div>
-                <div class="kpi-delta-positive">+14.8% vs mes ant.</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div style="font-size: 13px; font-weight: 600; color: #0B1220; width: 100px;">{idx+1}. {row['Producto']}</div>
+                <div style="flex-grow: 1; margin: 0 12px; background-color: #F1F5F9; border-radius: 10px; height: 10px; overflow: hidden;">
+                    <div style="width: {min(100, int(row['Cantidad']/df_top_prod['Cantidad'].max()*100))}%; background-color: #0284C7; height: 100%; border-radius: 10px;"></div>
+                </div>
+                <div style="font-size: 12px; font-weight: 700; color: #6B7686;">{row['Cantidad']} un.</div>
             </div>
             """, unsafe_allow_html=True)
             
-        with kpi3:
-            st.markdown(f"""
-            <div class="premium-card">
-                <div class="kpi-title">Margen Ganancia</div>
-                <div class="kpi-value">{margin_pct:.1f}%</div>
-                <div class="kpi-delta-positive">+2.1 pp vs mes ant.</div>
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with bcol2:
+        st.markdown("""
+        <div class="content-card">
+            <div class="card-title">Canales de Venta</div>
+            <div class="card-subtitle">Participación por canal</div>
+        """, unsafe_allow_html=True)
+        
+        df_channel = df_filtered.groupby('Canal_Venta')['Ventas_Soles'].sum().reset_index()
+        colors_ch = ['#0284C7', '#10B981', '#8B5CF6', '#F59E0B']
+        
+        fig_ch = go.Figure(data=[go.Pie(
+            labels=df_channel['Canal_Venta'],
+            values=df_channel['Ventas_Soles'],
+            hole=0.55,
+            marker=dict(colors=colors_ch),
+            textinfo='percent',
+            hoverinfo='label+percent'
+        )])
+        fig_ch.update_layout(
+            height=200,
+            margin=dict(l=5, r=5, t=5, b=5),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(font=dict(color='#0B1220', size=11))
+        )
+        st.plotly_chart(fig_ch, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with bcol3:
+        st.markdown("""
+        <div class="content-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <div class="card-title">Alertas y Recomendaciones</div>
+                </div>
+                <div style="font-size: 12px; font-weight: 700; color: #0284C7;">Ver todas →</div>
             </div>
-            """, unsafe_allow_html=True)
             
-        with kpi4:
-            st.markdown(f"""
-            <div class="premium-card">
-                <div class="kpi-title">Ticket Promedio</div>
-                <div class="kpi-value">S/ {ticket_avg:.2f}</div>
-                <div class="kpi-delta-positive">+3.5% vs mes ant.</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # GRÁFICOS PRINCIPALES
-        g_col1, g_col2 = st.columns([1.8, 1.2])
-        
-        with g_col1:
-            st.markdown("<h3 style='font-size: 18px;'>Evolución Diaria de Ventas y Ganancias</h3>", unsafe_allow_html=True)
-            
-            df_daily = df_filtered.groupby("Fecha")[["Ventas_Soles", "Utilidad_Soles"]].sum().reset_index()
-            
-            fig_line = go.Figure()
-            fig_line.add_trace(go.Scatter(
-                x=df_daily["Fecha"], y=df_daily["Ventas_Soles"],
-                mode='lines+markers', name='Ventas (S/)',
-                line=dict(color='#00C2D1', width=3, shape='spline'),
-                fill='tozeroy', fillcolor='rgba(0, 194, 209, 0.08)'
-            ))
-            fig_line.add_trace(go.Scatter(
-                x=df_daily["Fecha"], y=df_daily["Utilidad_Soles"],
-                mode='lines', name='Utilidad (S/)',
-                line=dict(color='#6C5CE7', width=2, dash='dot')
-            ))
-            
-            fig_line.update_layout(
-                height=320, margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Plus Jakarta Sans', color='#0B1220'),
-                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color='#0B1220')),
-                yaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color='#0B1220')),
-                legend=dict(orientation="h", y=1.1, font=dict(color='#0B1220'))
-            )
-            st.plotly_chart(fig_line, use_container_width=True)
-
-        with g_col2:
-            st.markdown("<h3 style='font-size: 18px;'>Ventas por Categoría</h3>", unsafe_allow_html=True)
-            
-            df_cat = df_filtered.groupby("Categoria")["Ventas_Soles"].sum().reset_index()
-            
-            fig_donut = go.Figure(data=[go.Pie(
-                labels=df_cat["Categoria"], values=df_cat["Ventas_Soles"],
-                hole=0.65, marker=dict(colors=['#00C2D1', '#6C5CE7', '#38BDF8', '#F59E0B', '#10B981']),
-                textinfo='percent', textfont=dict(color='#0B1220', size=12)
-            )])
-            
-            fig_donut.add_annotation(
-                text=f"<b style='font-size:16px;color:#0B1220;'>S/ {total_sales:,.0f}</b><br><span style='font-size:11px;color:#6B7686;'>Total</span>",
-                x=0.5, y=0.5, showarrow=False
-            )
-            
-            fig_donut.update_layout(
-                height=320, margin=dict(l=0, r=0, t=10, b=10),
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                legend=dict(orientation="v", y=0.5, font=dict(color='#0B1220'))
-            )
-            st.plotly_chart(fig_donut, use_container_width=True)
-
-    # -------------------------------------------------------------------------
-    # PANTALLA 02: PRODUCTOS ESTRELLA
-    # -------------------------------------------------------------------------
-    elif nav_option == "02. Productos Estrella":
-        import plotly.graph_objects as go
-        
-        st.markdown("<h3 style='font-size: 20px;'>Ranking de Productos Más Vendidos</h3>", unsafe_allow_html=True)
-        
-        p_col1, p_col2 = st.columns(2)
-        
-        with p_col1:
-            st.markdown("<h4 style='font-size: 15px; color:#6B7686;'>Top Productos por Facturación (S/)</h4>", unsafe_allow_html=True)
-            df_prod_val = df_filtered.groupby("Producto")["Ventas_Soles"].sum().reset_index().sort_values("Ventas_Soles", ascending=True)
-            
-            fig_bar_val = go.Figure(go.Bar(
-                x=df_prod_val["Ventas_Soles"], y=df_prod_val["Producto"],
-                orientation='h', marker=dict(color='#00C2D1')
-            ))
-            fig_bar_val.update_layout(
-                height=380, margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color='#0B1220')),
-                yaxis=dict(tickfont=dict(color='#0B1220'))
-            )
-            st.plotly_chart(fig_bar_val, use_container_width=True)
-
-        with p_col2:
-            st.markdown("<h4 style='font-size: 15px; color:#6B7686;'>Top Productos por Unidades Vendidas</h4>", unsafe_allow_html=True)
-            df_prod_qty = df_filtered.groupby("Producto")["Cantidad"].sum().reset_index().sort_values("Cantidad", ascending=True)
-            
-            fig_bar_qty = go.Figure(go.Bar(
-                x=df_prod_qty["Cantidad"], y=df_prod_qty["Producto"],
-                orientation='h', marker=dict(color='#6C5CE7')
-            ))
-            fig_bar_qty.update_layout(
-                height=380, margin=dict(l=10, r=10, t=10, b=10),
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color='#0B1220')),
-                yaxis=dict(tickfont=dict(color='#0B1220'))
-            )
-            st.plotly_chart(fig_bar_qty, use_container_width=True)
-
-    # -------------------------------------------------------------------------
-    # PANTALLA 03: ALERTAS Y DECISIONES
-    # -------------------------------------------------------------------------
-    elif nav_option == "03. Alertas y Decisiones":
-        st.markdown("<h3 style='font-size: 20px;'>Detección Automática de Oportunidades y Riesgos</h3>", unsafe_allow_html=True)
-        
-        threshold = st.slider("Ajustar Umbral Crítico de Stock (Unidades):", min_value=10, max_value=100, value=30)
-        
-        a_col1, a_col2 = st.columns(2)
-        
-        with a_col1:
-            st.markdown("""
             <div class="alert-card-warning">
-                <div style="font-weight: 700; font-size: 16px; margin-bottom: 6px;">Alerta de Reabastecimiento Crítico</div>
-                <div style="font-size: 14px; line-height: 1.5;">
-                    Los productos de la categoría <b>Bebidas</b> e <b>Insumos Básicos</b> registran un incremento del +38% de ventas durante los fines de semana. 
-                    Se sugiere programar compras los días jueves.
-                </div>
+                <div class="alert-title-warning">⚠️ Producto con baja rotación</div>
+                <div class="alert-desc-warning">El producto "Galletas" ha disminuido su venta en un 35% en comparación con el mes anterior.</div>
             </div>
-            """, unsafe_allow_html=True)
             
-            st.markdown("""
-            <div class="alert-card-warning">
-                <div style="font-weight: 700; font-size: 16px; margin-bottom: 6px;">Producto con Menor Rotación</div>
-                <div style="font-size: 14px; line-height: 1.5;">
-                    El producto <b>Detergente en Polvo 800g</b> presenta un acumulado mayor al umbral ajustado de """ + str(threshold) + """ unidades. 
-                    Se recomienda lanzar una promoción cruzada.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with a_col2:
-            st.markdown("""
             <div class="alert-card-success">
-                <div style="font-weight: 700; font-size: 16px; margin-bottom: 6px;">Oportunidad Digital Detectada</div>
-                <div style="font-size: 14px; line-height: 1.5;">
-                    El canal de pago <b>Yape / Digital</b> representa el 28% de la facturación total. 
-                    Imprimir el código QR visible en mostrador para agilizar el cobro.
-                </div>
+                <div class="alert-title-success">✅ Oportunidad de crecimiento</div>
+                <div class="alert-desc-success">La categoría de Bebidas muestra una tendencia al alza. Considera aumentar el stock.</div>
             </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("""
-            <div class="alert-card-success">
-                <div style="font-weight: 700; font-size: 16px; margin-bottom: 6px;">Estrategia de Incremento de Ticket</div>
-                <div style="font-size: 14px; line-height: 1.5;">
-                    El ticket promedio actual es de <b>S/ 32.50</b>. 
-                    Ofrecer un producto de impulso de S/ 3.50 en caja permitirá alcanzar la meta comercial de S/ 36.00 por cliente.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
-    # -------------------------------------------------------------------------
-    # PANTALLA 04: SIMULADOR MYPE
-    # -------------------------------------------------------------------------
-    elif nav_option == "04. Simulador MYPE":
-        st.markdown("<h3 style='font-size: 20px;'>Simulador Financiero de Crecimiento para la MYPE</h3>", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# PESTAÑA 2: VENTAS (OPERATIVA Y MODIFICABLE EN TIEMPO REAL)
+# ---------------------------------------------------------
+elif menu_option == "Ventas":
+    st.markdown('<h2 style="font-family: Space Grotesk, sans-serif; color: #0B1220;">📊 Análísis Detallado de Ventas</h2>', unsafe_allow_html=True)
+    
+    vcol1, vcol2, vcol3 = st.columns(3)
+    with vcol1:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">Ventas Netas Filtradas</div>
+            <div class="kpi-value">S/ {df_filtered['Ventas_Soles'].sum():,.2f}</div>
+            <div class="kpi-delta-pos">Calculado sobre {len(df_filtered)} registros</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with vcol2:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">Ticket Promedio</div>
+            <div class="kpi-value">S/ {(df_filtered['Ventas_Soles'].sum()/len(df_filtered)):,.2f}</div>
+            <div class="kpi-delta-pos">Promedio por transacción</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with vcol3:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">Canal Más Activo</div>
+            <div class="kpi-value">{df_filtered['Canal_Venta'].mode()[0] if len(df_filtered)>0 else 'N/A'}</div>
+            <div class="kpi-delta-pos">Mayor frecuencia de compra</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        sim_col1, sim_col2 = st.columns([1.2, 1.8])
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    vc1, vc2 = st.columns(2)
+    with vc1:
+        st.markdown('<div class="content-card"><div class="card-title">Ventas por Día de la Semana</div>', unsafe_allow_html=True)
+        df_dow = df_filtered.groupby('Dia_Semana')['Ventas_Soles'].sum().reset_index()
+        fig_dow = px.bar(df_dow, x='Dia_Semana', y='Ventas_Soles', color_discrete_sequence=['#00C2D1'])
+        fig_dow.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=260)
+        st.plotly_chart(fig_dow, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        with sim_col1:
-            st.markdown("<h4 style='font-size: 15px; color:#6B7686;'>Parámetros de Simulación</h4>", unsafe_allow_html=True)
-            inc_sales_pct = st.slider("Incremento Estimado en Ventas (%):", 0, 50, 15)
-            red_cost_pct = st.slider("Reducción de Mermas / Costos (%):", 0, 30, 8)
-            plan_fee = st.selectbox("Plan de Suscripción NexData:", ["Plan Básico (S/ 50/mes)", "Plan Premium (S/ 150/mes)"])
-            
-            fee_val = 50 if "50" in plan_fee else 150
-            
-        with sim_col2:
-            curr_sales = df_filtered["Ventas_Soles"].sum()
-            curr_profit = df_filtered["Utilidad_Soles"].sum()
-            
-            add_sales = curr_sales * (inc_sales_pct / 100)
-            add_savings = (curr_sales - curr_profit) * (red_cost_pct / 100)
-            gross_benefit = add_sales * 0.30 + add_savings
-            net_benefit = gross_benefit - fee_val
-            roi = (net_benefit / fee_val * 100) if fee_val > 0 else 0
-            
-            st.markdown(f"""
-            <div class="premium-card">
-                <div class="kpi-title">Beneficio Neto Adicional Estimado</div>
-                <div class="kpi-value" style="color: #166534;">S/ {net_benefit:,.2f} / mes</div>
-                <div style="font-size: 14px; color: #6B7686; margin-top: 8px;">
-                    • Ventas Adicionales Proyectadas: <b>S/ {add_sales:,.2f}</b><br>
-                    • Ahorro Estimado por Mermas: <b>S/ {add_savings:,.2f}</b><br>
-                    • Retorno de Inversión (ROI): <b style="color:#166534;">{roi:.0f}%</b>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+    with vc2:
+        st.markdown('<div class="content-card"><div class="card-title">Distribución por Ticket de Venta (S/)</div>', unsafe_allow_html=True)
+        fig_hist = px.histogram(df_filtered, x='Ventas_Soles', nbins=20, color_discrete_sequence=['#6C5CE7'])
+        fig_hist.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=260)
+        st.plotly_chart(fig_hist, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    st.markdown('<div class="content-card"><div class="card-title">Registro de Transacciones Filtradas</div>', unsafe_allow_html=True)
+    st.dataframe(df_filtered[['ID_Transaccion', 'Fecha', 'Producto', 'Categoria', 'Canal_Venta', 'Cantidad', 'Ventas_Soles', 'Utilidad_Soles']], use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown("<hr style='border-color: #E2E8F0; margin-top: 40px;'>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: center; font-size: 12px; color: #6B7686;'>NexData © 2026 – Plataforma de Inteligencia Empresarial para MYPES</div>", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# PESTAÑA 3: PRODUCTOS (OPERATIVA Y MODIFICABLE)
+# ---------------------------------------------------------
+elif menu_option == "Productos":
+    st.markdown('<h2 style="font-family: Space Grotesk, sans-serif; color: #0B1220;">📦 Matriz de Productos & Rotación</h2>', unsafe_allow_html=True)
+    
+    pcol1, pcol2 = st.columns(2)
+    with pcol1:
+        st.markdown('<div class="content-card"><div class="card-title">Top 10 Productos por Recaudación (S/)</div>', unsafe_allow_html=True)
+        df_p_rev = df_filtered.groupby('Producto')['Ventas_Soles'].sum().reset_index().sort_values('Ventas_Soles', ascending=True).tail(10)
+        fig_p1 = px.bar(df_p_rev, x='Ventas_Soles', y='Producto', orientation='h', color_discrete_sequence=['#00C2D1'])
+        fig_p1.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=320)
+        st.plotly_chart(fig_p1, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with pcol2:
+        st.markdown('<div class="content-card"><div class="card-title">Top 10 Productos por Unidades Vendidas</div>', unsafe_allow_html=True)
+        df_p_qty = df_filtered.groupby('Producto')['Cantidad'].sum().reset_index().sort_values('Cantidad', ascending=True).tail(10)
+        fig_p2 = px.bar(df_p_qty, x='Cantidad', y='Producto', orientation='h', color_discrete_sequence=['#6C5CE7'])
+        fig_p2.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=320)
+        st.plotly_chart(fig_p2, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# PESTAÑA 4: RENTABILIDAD (OPERATIVA)
+# ---------------------------------------------------------
+elif menu_option == "Rentabilidad":
+    st.markdown('<h2 style="font-family: Space Grotesk, sans-serif; color: #0B1220;">💲 Análisis de Margen y Rentabilidad</h2>', unsafe_allow_html=True)
+    
+    rcol1, rcol2 = st.columns(2)
+    with rcol1:
+        st.markdown('<div class="content-card"><div class="card-title">Relación Ventas vs Utilidad Neta por Producto</div>', unsafe_allow_html=True)
+        df_pu = df_filtered.groupby('Producto')[['Ventas_Soles', 'Utilidad_Soles']].sum().reset_index()
+        fig_scatter = px.scatter(df_pu, x='Ventas_Soles', y='Utilidad_Soles', text='Producto', size='Ventas_Soles', color_discrete_sequence=['#00C2D1'])
+        fig_scatter.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=340)
+        st.plotly_chart(fig_scatter, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with rcol2:
+        st.markdown('<div class="content-card"><div class="card-title">Margen % por Categoría</div>', unsafe_allow_html=True)
+        df_mg = df_filtered.groupby('Categoria')[['Ventas_Soles', 'Utilidad_Soles']].sum().reset_index()
+        df_mg['Margen_%'] = (df_mg['Utilidad_Soles'] / df_mg['Ventas_Soles'] * 100).round(1)
+        fig_mg = px.bar(df_mg, x='Categoria', y='Margen_%', color='Margen_%', color_continuous_scale='Blues')
+        fig_mg.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=340)
+        st.plotly_chart(fig_mg, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# PESTAÑA 5: ANÁLISIS (OPERATIVA)
+# ---------------------------------------------------------
+elif menu_option == "Análisis":
+    st.markdown('<h2 style="font-family: Space Grotesk, sans-serif; color: #0B1220;">🔍 Diagnóstico y Oportunidades</h2>', unsafe_allow_html=True)
+    
+    acol1, acol2 = st.columns(2)
+    with acol1:
+        st.markdown("""
+        <div class="content-card">
+            <div class="card-title">Detección de Patrones Operativos</div>
+            <p style="color: #6B7686; font-size: 14px;">
+                • <b>Pico de demanda:</b> Los fines de semana registran un +35% de incremento en el canal Delivery.<br>
+                • <b>Oportunidad de Venta Cruzada:</b> El 42% de compras en 'Alimentos' no incluye 'Bebidas'. Promocionar combos mejora el ticket en S/ 6.50.<br>
+                • <b>Eficacia por Canal:</b> El canal Online representa el 15% del volumen pero tiene el ticket promedio más alto (S/ 48.20).
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    with acol2:
+        st.markdown('<div class="content-card"><div class="card-title">Evolución de Costos vs Ingresos</div>', unsafe_allow_html=True)
+        df_ci = df_filtered.groupby(df_filtered['Fecha'].dt.date)[['Ventas_Soles', 'Costo_Soles']].sum().reset_index()
+        fig_ci = px.line(df_ci, x='Fecha', y=['Ventas_Soles', 'Costo_Soles'], color_discrete_map={'Ventas_Soles': '#00C2D1', 'Costo_Soles': '#6C5CE7'})
+        fig_ci.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=220)
+        st.plotly_chart(fig_ci, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# PESTAÑA 6: SIMULADOR (INTERACTIVO EN TIEMPO REAL)
+# ---------------------------------------------------------
+elif menu_option == "Simulador":
+    st.markdown('<h2 style="font-family: Space Grotesk, sans-serif; color: #0B1220;">🧮 Simulador Financiero & Proyección MYPE</h2>', unsafe_allow_html=True)
+    
+    sc1, sc2 = st.columns([1, 1.2])
+    
+    with sc1:
+        st.markdown('<div class="content-card"><div class="card-title">Parámetros de Simulación</div>', unsafe_allow_html=True)
+        inc_precio = st.slider("% Incremento Promedio de Precios", 0, 30, 5)
+        inc_volumen = st.slider("% Crecimiento Estimado de Ventas", 0, 50, 10)
+        red_costo = st.slider("% Optimización de Costos / Proveedores", 0, 20, 4)
+        
+        vtas_base = df_filtered['Ventas_Soles'].sum()
+        util_base = df_filtered['Utilidad_Soles'].sum()
+        
+        vtas_sim = vtas_base * (1 + inc_precio/100) * (1 + inc_volumen/100)
+        costo_base = vtas_base - util_base
+        costo_sim = costo_base * (1 - red_costo/100) * (1 + inc_volumen/100)
+        util_sim = vtas_sim - costo_sim
+        dif_util = util_sim - util_base
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with sc2:
+        st.markdown('<div class="content-card"><div class="card-title">Resultado de la Proyección en Tiempo Real</div>', unsafe_allow_html=True)
+        
+        res_col1, res_col2 = st.columns(2)
+        with res_col1:
+            st.metric("Ventas Proyectadas", f"S/ {vtas_sim:,.2f}", f"+{(vtas_sim-vtas_base)/vtas_base*100:.1f}%")
+        with res_col2:
+            st.metric("Utilidad Proyectada", f"S/ {util_sim:,.2f}", f"+{dif_util:,.2f} S/")
+            
+        fig_sim = go.Figure(data=[
+            go.Bar(name='Escenario Actual', x=['Ventas', 'Utilidad'], y=[vtas_base, util_base], marker_color='#8C9BAE'),
+            go.Bar(name='Escenario Simulado', x=['Ventas', 'Utilidad'], y=[vtas_sim, util_sim], marker_color='#00C2D1')
+        ])
+        fig_sim.update_layout(barmode='group', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=220)
+        st.plotly_chart(fig_sim, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
