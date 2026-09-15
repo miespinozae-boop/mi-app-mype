@@ -1,0 +1,31 @@
+Fecha,Categoria,Producto,Canal_Venta,Ventas_Soles,Utilidad_Soles,Cantidad
+2026-04-01,Alimentos,Arroz,Tienda física,1250,240,80
+2026-04-02,Alimentos,Aceite,Delivery,1080,205,70
+2026-04-03,Bebidas,Leche,Online,920,185,65
+2026-04-04,Limpieza,Detergente,Tienda física,740,130,52
+2026-04-05,Higiene,Galletas,Delivery,620,105,48
+2026-04-06,Alimentos,Arroz,Online,1320,255,84
+2026-04-07,Bebidas,Aceite,Tienda física,1140,218,73
+2026-04-08,Otros,Leche,Delivery,980,195,67
+2026-04-09,Limpieza,Detergente,Online,790,140,55
+2026-04-10,Alimentos,Galletas,Otros,650,112,50
+2026-04-11,Alimentos,Arroz,Tienda física,1250,240,80
+2026-04-12,Alimentos,Aceite,Delivery,1080,205,70
+2026-04-13,Bebidas,Leche,Online,920,185,65
+2026-04-14,Limpieza,Detergente,Tienda física,740,130,52
+2026-04-15,Higiene,Galletas,Delivery,620,105,48
+2026-04-16,Alimentos,Arroz,Online,1320,255,84
+2026-04-17,Bebidas,Aceite,Tienda física,1140,218,73
+2026-04-18,Otros,Leche,Delivery,980,195,67
+2026-04-19,Limpieza,Detergente,Online,790,140,55
+2026-04-20,Alimentos,Galletas,Otros,650,112,50
+2026-04-21,Alimentos,Arroz,Tienda física,1250,240,80
+2026-04-22,Alimentos,Aceite,Delivery,1080,205,70
+2026-04-23,Bebidas,Leche,Online,920,185,65
+2026-04-24,Limpieza,Detergente,Tienda física,740,130,52
+2026-04-25,Higiene,Galletas,Delivery,620,105,48
+2026-04-26,Alimentos,Arroz,Online,1320,255,84
+2026-04-27,Bebidas,Aceite,Tienda física,1140,218,73
+2026-04-28,Otros,Leche,Delivery,980,195,67
+2026-04-29,Limpieza,Detergente,Online,790,140,55
+2026-04-30,Alimentos,Galletas,Otros,650,112,50
